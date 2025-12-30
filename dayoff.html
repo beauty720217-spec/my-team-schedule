@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>團隊班表 | Connect & Warmth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --fet-red: #E60012;
+            --fet-dark-red: #B3000E;
+            --fet-bg: #f8f8f8;
+            --text-dark: #333333;
+            --text-gray: #777777;
+            
+            --status-work-bg: #fff0f1;
+            --status-work-text: #E60012;
+            --status-off-bg: #eeeeee;
+            --status-off-text: #999999;
+            --status-leave-bg: #fff8e1;
+            --status-leave-text: #f39c12;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--fet-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--fet-red) 0%, var(--fet-dark-red) 100%);
+            padding: 30px 20px 60px 20px;
+            color: white;
+            text-align: center;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            box-shadow: 0 4px 12px rgba(230, 0, 18, 0.3);
+        }
+
+        h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: 1px; }
+        .subtitle { margin-top: 8px; font-size: 0.95rem; opacity: 0.9; font-weight: 400; }
+
+        .container {
+            max-width: 800px;
+            margin: -45px auto 40px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- 公告欄區塊 --- */
+        .announcement-card {
+            background: white;
+            border-left: 5px solid var(--fet-red);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            animation: fadeIn 0.5s ease-in-out;
+            display: none; /* 預設隱藏，抓到資料才顯示 */
+        }
+        
+        .announcement-icon {
+            font-size: 1.5rem;
+            margin-top: 2px;
+        }
+
+        .announcement-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            color: var(--fet-red);
+        }
+        
+        .announcement-content p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .date-picker-group { display: flex; align-items: center; justify-content: center; gap: 10px; }
+        label { font-weight: 500; color: var(--text-dark); }
+        
+        select {
+            padding: 10px 16px;
+            font-size: 1rem;
+            border: 2px solid #eee;
+            border-radius: 30px;
+            background: white;
+            outline: none;
+            cursor: pointer;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        select:focus { border-color: var(--fet-red); }
+
+        .stats-bar {
+            display: flex; justify-content: space-around;
+            border-top: 1px solid #f0f0f0; padding-top: 15px; margin-top: 5px;
+        }
+        .stat-item strong { display: block; font-size: 1.4rem; color: var(--fet-red); margin-bottom: 4px; }
+
+        .dashboard-section { margin-top: 25px; }
+        .section-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+            font-weight: 700; font-size: 1.1rem; padding-left: 5px;
+        }
+        .section-header::before {
+            content: ''; display: block; width: 4px; height: 18px;
+            background: var(--fet-red); border-radius: 2px;
+        }
+        .section-header.off-header::before { background: #ccc; }
+
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+
+        .staff-card {
+            background: white; padding: 15px 10px; border-radius: 12px;
+            text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            border: 1px solid transparent; position: relative;
+        }
+        .staff-name { font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-dark); }
+        .staff-shift { font-size: 0.85rem; display: inline-block; padding: 4px 10px; border-radius: 20px; font-weight: 500; }
+
+        .status-work { border-color: rgba(230, 0, 18, 0.1); }
+        .status-work .staff-shift { background-color: var(--status-work-bg); color: var(--status-work-text); }
+        .status-off { opacity: 0.65; background: #fafafa; }
+        .status-off .staff-shift { background-color: var(--status-off-bg); color: var(--status-off-text); }
+        .status-leave .staff-shift { background-color: var(--status-leave-bg); color: var(--status-leave-text); }
+
+        footer { text-align: center; margin-top: 40px; padding-bottom: 20px; color: #aaa; font-size: 0.8rem; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>FE Team Schedule</h1>
+    <p class="subtitle" id="greeting">只有遠傳，沒有距離。夥伴們今天加油！</p>
+</header>
+
+<div class="container">
+    
+    <div class="announcement-card" id="announcement-board">
+        <div class="announcement-icon">📢</div>
+        <div class="announcement-content">
+            <h3 id="announcement-title">讀取公告中...</h3>
+            <p id="announcement-msg">正在更新雲端資訊...</p>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="date-picker-group">
+            <label for="dateSelect">📅 查看日期</label>
+            <select id="dateSelect" onchange="renderSchedule()"></select>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item"><strong id="count-work">0</strong>值班夥伴</div>
+            <div class="stat-item" style="color:#999"><strong style="color:#999" id="count-off">0</strong>休假充電</div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <div class="section-header">Work Together (值班中)</div>
+        <div class="card-grid" id="working-list"></div>
+    </div>
+
+    <div class="dashboard-section">
+        <div class="section-header off-header" style="color: #888;">Off Duty (休息中)</div>
+        <div class="card-grid" id="off-list"></div>
+    </div>
+</div>
+
+<footer>
+    <p>© 2024 Team Schedule System</p>
+</footer>
+
+<script>
+    // -----------------------------------------------------------
+    // 設定區：您的 Google 試算表 CSV 連結已填入
+    // -----------------------------------------------------------
+    const googleSheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrRD50gSTA6V3LCDzhd4h1dQ0bcMGQCKwtBYVcIg0M2JpEnRkFUNaGSZFL6FxrwYdCQStTq1zB1WTl/pub?output=csv";
+
+    // --- 1. 班表資料與人員 (DATA) ---
+    // 目前僅填入 12/7 ~ 12/9 為範例
+    const staffList = ["顏O菁", "楊O潔", "莊O甯", "張O涵", "黃O琳", "黃O彥", "陳O雯", "黃O育", "伍O維", "郭O逸", "陳O文"];
+    const scheduleData = {
+        "12/7": { "顏O菁": "1400", "楊O潔": "1400", "莊O甯": "DO", "張O涵": "DO", "黃O琳": "1400", "黃O彥": "DO", "陳O雯": "DO", "黃O育": "1400", "伍O維": "1400", "郭O逸": "DO", "陳O文": "DO" },
+        "12/8": { "顏O菁": "1400", "楊O潔": "特休", "莊O甯": "1400", "張O涵": "1400", "黃O琳": "特休", "黃O彥": "1400", "陳O雯": "1400", "黃O育": "1400", "伍O維": "1400", "郭O逸": "K07", "陳O文": "K07" },
+        "12/9": { "顏O菁": "DO", "楊O潔": "DO", "莊O甯": "1400", "張O涵": "1400", "黃O琳": "DO", "黃O彥": "1400", "陳O雯": "1400", "黃O育": "DO", "伍O維": "DO", "郭O逸": "K07", "陳O文": "K07" }
+        // ... 若有更多資料請依格式繼續貼上 ...
+    };
+
+    // --- 2. 抓取 Google 試算表公告 ---
+    async function fetchAnnouncement() {
+        try {
+            // 加入時間戳記避免瀏覽器快取舊資料
+            const response = await fetch(googleSheetCSV + "&t=" + new Date().getTime());
+            const data = await response.text();
+            
+            // 解析 CSV
+            const rows = data.split("\n");
+            
+            // 確保有資料才處理
+            if (rows.length > 0) {
+                // 處理可能存在的 CSV 逗號問題
+                const rawLine = rows[0]; 
+                
+                // 簡單切割邏輯：取第一個逗號前的字當標題，逗號後全部當內容
+                const firstCommaIndex = rawLine.indexOf(',');
+                
+                if (firstCommaIndex !== -1) {
+                    let title = rawLine.substring(0, firstCommaIndex).trim();
+                    let msg = rawLine.substring(firstCommaIndex + 1).trim();
+
+                    // 移除 CSV 可能產生的雙引號
+                    title = title.replace(/^"|"$/g, '');
+                    msg = msg.replace(/^"|"$/g, '');
+
+                    if (title && msg) {
+                        const board = document.getElementById('announcement-board');
+                        board.style.display = "flex"; // 顯示公告欄
+                        document.getElementById('announcement-title').textContent = title;
+                        document.getElementById('announcement-msg').textContent = msg;
+                    } else {
+                        // 內容如果是空的，就隱藏
+                        document.getElementById('announcement-board').style.display = "none";
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("公告讀取失敗:", error);
+            // 失敗時隱藏公告欄，保持畫面乾淨
+            document.getElementById('announcement-board').style.display = "none";
+        }
+    }
+
+    // --- 3. 渲染班表 ---
+    const dateSelect = document.getElementById('dateSelect');
+    const workingList = document.getElementById('working-list');
+    const offList = document.getElementById('off-list');
+    const countWork = document.getElementById('count-work');
+    const countOff = document.getElementById('count-off');
+
+    // 隨機問候語
+    const greetings = [
+        "只有遠傳，沒有距離。夥伴們今天加油！",
+        "用心連結每一刻，今天也要充滿活力！",
+        "辛苦了！別忘了互相支援，我們是最棒的團隊。",
+        "保持微笑，好事會發生！Keep Going!",
+        "今天的努力，是為了遇見更好的自己。"
+    ];
+
+    Object.keys(scheduleData).forEach(date => {
+        const option = document.createElement('option');
+        option.value = date; option.text = date;
+        dateSelect.appendChild(option);
+    });
+
+    function renderSchedule() {
+        const selectedDate = dateSelect.value;
+        const todaysShift = scheduleData[selectedDate] || {};
+        workingList.innerHTML = ''; offList.innerHTML = '';
+        let workCount = 0; let offCount = 0;
+
+        if (Object.keys(todaysShift).length === 0) {
+            workingList.innerHTML = '<p style="color:#aaa;">暫無資料</p>'; return;
+        }
+
+        staffList.forEach(name => {
+            const shift = todaysShift[name] || "未知";
+            const isOff = ["DO", "休", "特休", ""].includes(shift);
+            const isLeave = shift === "特休";
+            const card = document.createElement('div');
+            let statusClass = isOff ? (isLeave ? 'status-leave' : 'status-off') : 'status-work';
+            card.className = `staff-card ${statusClass}`;
+            card.innerHTML = `<div class="staff-name">${name}</div><div class="staff-shift">${shift}</div>`;
+            isOff ? (offList.appendChild(card), offCount++) : (workingList.appendChild(card), workCount++);
+        });
+        countWork.textContent = workCount; countOff.textContent = offCount;
+        
+        // 隨機切換問候語
+        document.getElementById('greeting').textContent = greetings[Math.floor(Math.random() * greetings.length)];
+    }
+
+    renderSchedule();
+    fetchAnnouncement(); // 執行抓取公告
+
+</script>
+</body>
+</html>
